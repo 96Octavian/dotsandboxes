@@ -1,4 +1,4 @@
-public enum class directions {
+enum class directions {
     VERTICAL,
     HORIZONTAL
 }
@@ -9,7 +9,7 @@ class BoardCell(val x: Int, val y: Int) {
 
     override fun toString(): String {
         val symbol: String
-        if (vertical && horizontal)  // TODO: Controlla che non sia un angolo
+        if (vertical && horizontal)
             symbol = " + "
         else if (vertical)
             symbol = " | "
@@ -21,7 +21,7 @@ class BoardCell(val x: Int, val y: Int) {
     }
 
     fun toString(direction: directions): String {
-        var symbol: String = "   "
+        var symbol = "   "
         if (direction == directions.HORIZONTAL && horizontal)
             symbol = " - "
         else if (direction == directions.VERTICAL && vertical)
@@ -32,6 +32,22 @@ class BoardCell(val x: Int, val y: Int) {
 
 class Board(private val columns: Int, private val rows: Int) {
 
+    companion object {
+        fun setup():Board{
+            var col:Int? = null
+            while(col == null) {
+                print("Column number: ")
+                col = readLine()?.trim()?.toIntOrNull()
+            }
+            var row:Int? = null
+            while(row == null) {
+                print ("Row number: ")
+                row = readLine()?.trim()?.toIntOrNull()
+            }
+            return Board(col, row)
+        }
+    }
+
     private val board: Array<Array<BoardCell>> = Array(this.columns) { i ->
         Array(this.rows) { j ->
             BoardCell(i, j)
@@ -40,12 +56,11 @@ class Board(private val columns: Int, private val rows: Int) {
 
     fun setLineEasy(x: Int, y: Int): Pair<Boolean, String> {
         if ((y + x) % 2 == 0)
-            return Pair(false, "Can't draw line on dots");
+            return Pair(false, "Can't draw line on dots")
         if (y % 2 == 0) {
             return setLine(x / 2, (y - 1) / 2, directions.VERTICAL)
         } else {
             return setLine((x - 1) / 2, y / 2, directions.HORIZONTAL)
-
         }
     }
 
@@ -76,8 +91,9 @@ class Board(private val columns: Int, private val rows: Int) {
         }
     }
 
+    // TODO: Numeri a più di una cifra
     fun getMap(): String {
-        var stringMap: String = " ";
+        var stringMap = " "
 
         // Print x headers
         for (i in 0 until columns * 2 - 1) {
@@ -85,7 +101,7 @@ class Board(private val columns: Int, private val rows: Int) {
         }
         stringMap += "\n"
 
-        var rowIndex: Int = 1
+        var rowIndex = 1
         for (y in 0 until rows) {
             stringMap += "${rowIndex} "
             rowIndex++
