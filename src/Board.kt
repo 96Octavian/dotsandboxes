@@ -1,47 +1,67 @@
-enum class directions {
+import java.lang.Exception
+
+enum class Directions {
     VERTICAL,
     HORIZONTAL
 }
 
-class BoardCell(val x: Int, val y: Int) {
-    var vertical: Boolean = false
-    var horizontal: Boolean = false
+class IndexOutOfBoardException(message: String) : Exception(message)
 
-    override fun toString(): String {
-        val symbol: String
-        if (vertical && horizontal)
-            symbol = " + "
-        else if (vertical)
-            symbol = " | "
-        else if (horizontal)
-            symbol = " - "
-        else
-            symbol = "   "
-        return symbol
-    }
-
-    fun toString(direction: directions): String {
-        var symbol = "   "
-        if (direction == directions.HORIZONTAL && horizontal)
-            symbol = " - "
-        else if (direction == directions.VERTICAL && vertical)
-            symbol = " | "
-        return symbol
-    }
+interface IBoardCell {
+    val x: Int
+    val y: Int
+    val vertical: Boolean
+    val horizontal: Boolean
 }
 
-class Board(private val columns: Int, private val rows: Int) {
+class Board(val columns: Int, val rows: Int) {
+
+    private class BoardCell(override val x: Int, override val y: Int) : IBoardCell {
+        override var vertical: Boolean = false
+        override var horizontal: Boolean = false
+
+        override fun toString(): String {
+            return if (vertical && horizontal)
+                " + "
+            else if (vertical)
+                " | "
+            else if (horizontal)
+                " - "
+            else
+                "   "
+        }
+
+        fun toString(direction: Directions): String {
+            var symbol = "   "
+            if (direction == Directions.HORIZONTAL && horizontal)
+                symbol = " - "
+            else if (direction == Directions.VERTICAL && vertical)
+                symbol = " | "
+            return symbol
+        }
+
+        override fun equals(other: Any?): Boolean {
+            return other is BoardCell && other.x == x && other.y == y
+        }
+
+        override fun hashCode(): Int {
+            var result = x
+            result = 31 * result + y
+            return result
+        }
+    }
+
 
     companion object {
-        fun setup():Board{
-            var col:Int? = null
-            while(col == null) {
+        fun setup(): Board {
+            var col: Int? = null
+            while (col == null) {
                 print("Column number: ")
                 col = readLine()?.trim()?.toIntOrNull()
             }
-            var row:Int? = null
-            while(row == null) {
-                print ("Row number: ")
+            var row: Int? = null
+            while (row == null) {
+                print("Row number: ")
                 row = readLine()?.trim()?.toIntOrNull()
             }
             return Board(col, row)
@@ -54,38 +74,54 @@ class Board(private val columns: Int, private val rows: Int) {
         }
     }
 
-    fun setLineEasy(x: Int, y: Int): Pair<Boolean, String> {
-        if ((y + x) % 2 == 0)
-            return Pair(false, "Can't draw line on dots")
-        if (y % 2 == 0) {
-            return setLine(x / 2, (y - 1) / 2, directions.VERTICAL)
+    fun getCellEasy(x: Int, y: Int): IBoardCell {
+        val actual = translate(x, y)
+        return getCell(actual.first, actual.second)
+    }
+
+    fun getCell(x: Int, y: Int): IBoardCell {
+        if (x < 0 || y < 0 || x >= columns || y >= rows)
+            throw IndexOutOfBoardException("Cell index out of board")
+        return board[x][y]
+    }
+
+    fun translate(x: Int, y: Int): Triple<Int, Int, Directions> {
+        return if (y % 2 == 0) {
+            Triple(x / 2, (y - 1) / 2, Directions.VERTICAL)
         } else {
-            return setLine((x - 1) / 2, y / 2, directions.HORIZONTAL)
+            Triple((x - 1) / 2, y / 2, Directions.HORIZONTAL)
         }
     }
 
-    private fun setLine(x: Int, y: Int, direction: directions): Pair<Boolean, String> {
+    fun setLineEasy(x: Int, y: Int): Pair<Boolean, String> {
+        if ((y + x) % 2 == 0)
+            return Pair(false, "Can't draw line on dots")
+        val translated = translate(x, y)
+        return setLine(translated.first, translated.second, translated.third)
+    }
+
+    private fun setLine(x: Int, y: Int, direction: Directions): Pair<Boolean, String> {
         if (x < 0 || y < 0 || x >= columns || y >= rows)
             return Pair(false, "Coordinates out of map")
         when (direction) {
-            directions.HORIZONTAL -> {
-                if (x < 0 || x >= columns - 2)
-                    return Pair(false, "Coordinates out of map")
-                if (board[x][y].horizontal)
-                    return Pair(false, "Line already drawn")
+            Directions.HORIZONTAL -> {
+                return if (x < 0 || x >= columns - 1)
+                    Pair(false, "Coordinates out of map")
+                else if (board[x][y].horizontal)
+                    Pair(false, "Line already drawn")
                 else {
                     board[x][y].horizontal = true
-                    return Pair(true, "Line drawn")
+                    Pair(true, "Line drawn")
                 }
             }
-            directions.VERTICAL -> {
-                if (y < 0 || y >= rows - 2)
-                    return Pair(false, "Coordinates out of map")
-                if (board[x][y].vertical)
-                    return Pair(false, "Line already drawn")
+            Directions.VERTICAL -> {
+                return if (y < 0 || y >= rows - 1)
+                    Pair(false, "Coordinates out of map")
+                else if (board[x][y].vertical)
+                    Pair(false, "Line already drawn")
                 else {
                     board[x][y].vertical = true
-                    return Pair(true, "Line drawn")
+                    Pair(true, "Line drawn")
                 }
             }
         }
@@ -96,24 +132,28 @@ class Board(private val columns: Int, private val rows: Int) {
         var stringMap = " "
 
         // Print x headers
+        var crappyMap = false
         for (i in 0 until columns * 2 - 1) {
             stringMap += " ${i + 1}"
+            if (i + 1 > 10)
+                crappyMap = true
         }
         stringMap += "\n"
+        if (crappyMap) stringMap = "Map is too large, it's gonna look all crappy ¯\\_(ツ)_/¯\n\n$stringMap"
 
         var rowIndex = 1
         for (y in 0 until rows) {
-            stringMap += "${rowIndex} "
+            stringMap += "$rowIndex "
             rowIndex++
             for (x in 0 until columns - 1)
-                stringMap += "•" + board[x][y].toString(directions.HORIZONTAL)
+                stringMap += "•" + board[x][y].toString(Directions.HORIZONTAL)
             stringMap += "•\n"
             if (y >= rows - 1)
                 break
             stringMap += rowIndex
             rowIndex++
             for (x in 0 until columns)
-                stringMap += board[x][y].toString(directions.VERTICAL) + " "
+                stringMap += board[x][y].toString(Directions.VERTICAL) + " "
             stringMap += "\n"
         }
         return stringMap
