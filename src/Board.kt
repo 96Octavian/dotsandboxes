@@ -7,6 +7,7 @@ enum class Directions {
 
 class IndexOutOfBoardException(message: String) : Exception(message)
 
+// Public interface for cell containing coordinates and lines drawn
 interface IBoardCell {
     val x: Int
     val y: Int
@@ -14,77 +15,94 @@ interface IBoardCell {
     val horizontal: Boolean
 }
 
-class Board(val columns: Int, val rows: Int) {
+// Holds coordinates and lines drawn for a cell, and provides representation
+private class BoardCell(override val x: Int, override val y: Int) : IBoardCell {
+    override var vertical: Boolean = false
+    override var horizontal: Boolean = false
 
-    private class BoardCell(override val x: Int, override val y: Int) : IBoardCell {
-        override var vertical: Boolean = false
-        override var horizontal: Boolean = false
-
-        override fun toString(): String {
-            return if (vertical && horizontal)
-                " + "
-            else if (vertical)
-                " | "
-            else if (horizontal)
-                " - "
-            else
-                "   "
-        }
-
-        fun toString(direction: Directions): String {
-            var symbol = "   "
-            if (direction == Directions.HORIZONTAL && horizontal)
-                symbol = " - "
-            else if (direction == Directions.VERTICAL && vertical)
-                symbol = " | "
-            return symbol
-        }
-
-        override fun equals(other: Any?): Boolean {
-            return other is BoardCell && other.x == x && other.y == y
-        }
-
-        override fun hashCode(): Int {
-            var result = x
-            result = 31 * result + y
-            return result
-        }
+    // Provide indication if the line is drawn
+    fun toString(direction: Directions): String {
+        var symbol = "   "
+        if (direction == Directions.HORIZONTAL && horizontal)
+            symbol = " - "
+        else if (direction == Directions.VERTICAL && vertical)
+            symbol = " | "
+        return symbol
     }
 
+    override fun equals(other: Any?): Boolean {
+        return other is BoardCell && other.x == x && other.y == y
+    }
 
+    override fun hashCode(): Int {
+        var result = x
+        result = 31 * result + y
+        return result
+    }
+}
+
+// Handles every operation on the gaem board
+class Board(val columns: Int, val rows: Int) {
+
+    // Setup handler
     companion object {
         fun setup(): Board {
+            // Ask for columns number
             var col: Int? = null
             while (col == null) {
-                print("Column number: ")
+                print("Columns number: ")
                 col = readLine()?.trim()?.toIntOrNull()
             }
+            // Ask for rows number
             var row: Int? = null
             while (row == null) {
-                print("Row number: ")
+                print("Rows number: ")
                 row = readLine()?.trim()?.toIntOrNull()
             }
             return Board(col, row)
         }
     }
 
+    /*
+     * The matrix holds only vertical/horizontal line pairs. It has an extra row and column which can hold respectively
+     * only horizontal and vertical lines: this is because every cell holds a vertical line and the horizontal line to
+     * its right, therefore in the rightmost column the horizontal line must not have a correspoding vertical one. The
+     * same holds conversely for the lowest row, as cells hold an horizontal line and the vertical one under that. If we
+     * used every row/column, a 3x3 map would result in this:
+     * • - • - • -
+     * |   |   |
+     * • - • - • -
+     * |   |   |
+     * • - • - • -
+     * |   |   |
+     * instead of the (correct) 3x3 map
+     * • - • - •
+     * |   |   |
+     * • - • - •
+     * |   |   |
+     * • - • - •
+     */
+    // Matrix containing cells
     private val board: Array<Array<BoardCell>> = Array(this.columns) { i ->
         Array(this.rows) { j ->
             BoardCell(i, j)
         }
     }
 
+    // Retrieve a cell using visual coordinates
     fun getCellEasy(x: Int, y: Int): IBoardCell {
         val actual = translate(x, y)
         return getCell(actual.first, actual.second)
     }
 
+    // Retrieve a cell using actual coordinates (internal representation)
     fun getCell(x: Int, y: Int): IBoardCell {
         if (x < 0 || y < 0 || x >= columns || y >= rows)
             throw IndexOutOfBoardException("Cell index out of board")
         return board[x][y]
     }
 
+    // From visual coordinates retrieves actual coordinates and direction (internal representation)
     fun translate(x: Int, y: Int): Triple<Int, Int, Directions> {
         return if (y % 2 == 0) {
             Triple(x / 2, (y - 1) / 2, Directions.VERTICAL)
@@ -93,6 +111,7 @@ class Board(val columns: Int, val rows: Int) {
         }
     }
 
+    // Draw a line using visual coordinates
     fun setLineEasy(x: Int, y: Int): Pair<Boolean, String> {
         if ((y + x) % 2 == 0)
             return Pair(false, "Can't draw line on dots")
@@ -100,12 +119,14 @@ class Board(val columns: Int, val rows: Int) {
         return setLine(translated.first, translated.second, translated.third)
     }
 
+    // Draws a line using actual coordinates (internal representation)
     private fun setLine(x: Int, y: Int, direction: Directions): Pair<Boolean, String> {
-        if (x < 0 || y < 0 || x >= columns || y >= rows)
+
+        if (x < 0 || y < 0 || x >= columns || y >= rows)    // Indexes must not exceed the matrix's dimensions
             return Pair(false, "Coordinates out of map")
         when (direction) {
             Directions.HORIZONTAL -> {
-                return if (x < 0 || x >= columns - 1)
+                return if (x < 0 || x >= columns - 1)       // The last column cannot have horizontal lines
                     Pair(false, "Coordinates out of map")
                 else if (board[x][y].horizontal)
                     Pair(false, "Line already drawn")
@@ -115,7 +136,7 @@ class Board(val columns: Int, val rows: Int) {
                 }
             }
             Directions.VERTICAL -> {
-                return if (y < 0 || y >= rows - 1)
+                return if (y < 0 || y >= rows - 1)          // The last row cannot have vertical lines
                     Pair(false, "Coordinates out of map")
                 else if (board[x][y].vertical)
                     Pair(false, "Line already drawn")
