@@ -32,11 +32,11 @@ class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
     // Check if the given line closes a square
     private fun checkClosedSquareAround(starting: IBoardCell, direction: Directions): Boolean {
 
-        // Check if the scquare is closed with the cell at its right and under (for both vertical and horizontal lines)
+        // Check if the square is closed with the cell at its right and under (for both vertical and horizontal lines)
         val closed: Boolean = try {
             val one = board.getCell(starting.x + 1, starting.y)
             val two = board.getCell(starting.x, starting.y + 1)
-            one.vertical && two.horizontal && starting.vertical
+            one.vertical && two.horizontal && starting.vertical && starting.horizontal
         } catch (e: IndexOutOfBoardException) {
             false
         }
@@ -54,7 +54,7 @@ class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
             try {
                 val three = board.getCell(starting.x - 1, starting.y)
                 val four = board.getCell(three.x, three.y + 1)
-                three.horizontal && three.vertical && four.vertical
+                three.horizontal && three.vertical && four.horizontal
             } catch (e: IndexOutOfBoardException) {
                 false
             }
@@ -66,7 +66,7 @@ class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
     private fun checkClosedSquare(column: Int, row: Int): Boolean {
 
         val (x, y, dir) = board.translate(column, row)
-        val original = board.getCellEasy(x, y)
+        val original = board.getCell(x, y)
 
         return checkClosedSquareAround(original, dir)
 
@@ -152,7 +152,7 @@ class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
         // Game ended, print scoreboard and goodbye
         println("Score:")
         for (player in getScore()) {
-            println(player.name + ":\t" + player.score)
+            println("Player ${player.name}:	${player.score}")
         }
         println("#################\n### Game Over ###\n#################")
 

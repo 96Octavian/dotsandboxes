@@ -170,7 +170,7 @@ class Board(val columns: Int, val rows: Int) {
                 stringMap += "•" + board[x][y].toString(Directions.HORIZONTAL)
             stringMap += "•\n"
             if (y >= rows - 1)
-                break
+            /* I'm one step closer to the edge, and I'm about to... */ break
             stringMap += rowIndex
             rowIndex++
             for (x in 0 until columns)
