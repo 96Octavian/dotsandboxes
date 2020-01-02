@@ -52,12 +52,20 @@ class Board(val columns: Int, val rows: Int) {
             while (col == null) {
                 print("Columns number: ")
                 col = readLine()?.trim()?.toIntOrNull()
+                if (col != null && col < 2) {
+                    println("Minimum is 2")
+                    col = null
+                }
             }
             // Ask for rows number
             var row: Int? = null
             while (row == null) {
                 print("Rows number: ")
                 row = readLine()?.trim()?.toIntOrNull()
+                if (row != null && row < 2) {
+                    println("Minimum is 2")
+                    row = null
+                }
             }
             return Board(col, row)
         }
@@ -148,7 +156,7 @@ class Board(val columns: Int, val rows: Int) {
         }
     }
 
-    // TODO: Numeri a più di una cifra
+    // TODO: Column headers with more than a single digit
     fun getMap(): String {
         var stringMap = " "
 

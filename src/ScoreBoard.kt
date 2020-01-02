@@ -19,6 +19,11 @@ class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
             while (num == null) {
                 print("Player number: ")
                 num = readLine()?.trim()?.toIntOrNull()
+                if (num != null && num < 1) {
+                    println("Minimum is 1")
+                    num = null
+                }
+
             }
             return ScoreBoard(board, List(num) { i -> Player(i) })
         }
@@ -26,7 +31,7 @@ class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
 
     // Provides a list of players ordered by score
     private fun getScore(): List<Player> {
-        return players.sortedBy { player -> player.score }
+        return players.sortedBy { player -> player.score }.reversed()
     }
 
     // Check if the given line closes a square
@@ -152,6 +157,7 @@ class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
         // Game ended, print scoreboard and goodbye
         println("Score:")
         for (player in getScore()) {
+            // TODO: Pretty print
             println("Player ${player.name}:	${player.score}")
         }
         println("#################\n### Game Over ###\n#################")
