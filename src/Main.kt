@@ -1,8 +1,12 @@
 fun main() {
 
+    // Use I/O Managers
+    val oManager = OutputManager()
+    val iManager = InputManger()
+
     // Setup board and players
-    val board = Board.setup()
-    val score = ScoreBoard.setup(board)
+    val board = Board.setup(oManager, iManager)
+    val score = ScoreBoard.setup(board, oManager, iManager)
 
     println(board.getMap())
 

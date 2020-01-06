@@ -46,12 +46,12 @@ class Board(val columns: Int, val rows: Int) {
 
     // Setup handler
     companion object {
-        fun setup(): Board {
+        fun setup(oManager: IOutputManager, iManager: IInputManger): Board {
             // Ask for columns number
             var col: Int? = null
             while (col == null) {
-                print("Columns number: ")
-                col = readLine()?.trim()?.toIntOrNull()
+                oManager.output("Columns number: ")
+                col = iManager.input().trim().toIntOrNull()
                 if (col != null && col < 2) {
                     println("Minimum is 2")
                     col = null
@@ -60,8 +60,8 @@ class Board(val columns: Int, val rows: Int) {
             // Ask for rows number
             var row: Int? = null
             while (row == null) {
-                print("Rows number: ")
-                row = readLine()?.trim()?.toIntOrNull()
+                oManager.output("Rows number: ")
+                row = iManager.input().trim().toIntOrNull()
                 if (row != null && row < 2) {
                     println("Minimum is 2")
                     row = null

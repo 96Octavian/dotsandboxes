@@ -6,26 +6,31 @@ class Player(private val Number: Int) {
 }
 
 // Handles the game flow
-class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
+class ScoreBoard(
+    private val board: Board,
+    somePlayers: List<Player>,
+    val outputManager: OutputManager,
+    val inputManger: InputManger
+) {
 
     private val players: List<Player> = somePlayers
     private var currentPlayer: Int = 0
 
     // Setup handler
     companion object {
-        fun setup(board: Board): ScoreBoard {
+        fun setup(board: Board, outputManager: OutputManager, inputManger: InputManger): ScoreBoard {
             // Ask how many participating players
             var num: Int? = null
             while (num == null) {
-                print("Player number: ")
-                num = readLine()?.trim()?.toIntOrNull()
+                outputManager.output("Player number: ")
+                num = inputManger.input().trim().toIntOrNull()
                 if (num != null && num < 1) {
-                    println("Minimum is 1")
+                    outputManager.error("Minimum is 1")
                     num = null
                 }
 
             }
-            return ScoreBoard(board, List(num) { i -> Player(i) })
+            return ScoreBoard(board, List(num) { i -> Player(i) }, outputManager, inputManger)
         }
     }
 
@@ -86,18 +91,16 @@ class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
         for (player in players) {
             var answer: String? = null
             while (answer == null) {
-                println("Player ${player.name}, do you want to change your name (y/n)?")
-                val tmp = readLine()?.trim()
-                if (tmp != null && (tmp == "y" || tmp == "n"))
+                outputManager.output("Player ${player.name}, do you want to change your name (y/n)?")
+                val tmp = inputManger.input()
+                if (tmp == "y" || tmp == "n")
                     answer = tmp
+                else
+                    outputManager.error("Input only \"y\" or \"n\"")
             }
             if (answer == "y") {
-                answer = null
-                while (answer == null) {
-                    print("Insert name: ")
-                    answer = readLine()?.trim()
-                }
-                player.name = answer
+                outputManager.output("Insert name: ")
+                player.name = inputManger.input()
             }
         }
 
@@ -105,47 +108,48 @@ class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
         var availableMoves: Int = 2 * (board.columns - 1) * (board.rows - 1) + board.columns - 1 + board.rows + -1
         while (availableMoves > 0) {
             coordinates.clear()
-            println(board.getMap())
-            println("--> Player " + players[currentPlayer].name)
+            outputManager.output(board.getMap())
+            outputManager.output("--> Player " + players[currentPlayer].name)
 
             // Ask the player where does he wants to draw a line
-            println("Insert the coordinates:")
-            readLine()?.let { line ->
-                line.trim().split("\\s+".toRegex()).map {
+            outputManager.output("Insert the coordinates:")
+            inputManger.input().let { line ->
+                line.split("\\s+".toRegex()).map {
                     coordinates.add(it.trim().toIntOrNull())
                 }
             }
             // Sanity check the input
             if (coordinates.contains(null)) {
-                println("Please input only numbers")
+                outputManager.error("Please input only numbers")
                 continue
             } else if (coordinates.size == 1 && coordinates[0] == 0) {
-                println("Bye!")
+                outputManager.output("Bye!")
                 break
             } else if (coordinates.size != 2) {
-                println("Please input only two numbers")
+                outputManager.output("Please input only two numbers")
                 continue
             } else {
                 val result: Pair<Boolean, String> = board.setLineEasy(coordinates[0]!!, coordinates[1]!!)
-                println(result.second)
                 // Check if coordinates are valid
                 if (result.first) {
-
+                    outputManager.output(result.second)
                     // A move has been done
                     availableMoves--
 
                     // Check if a square has been closed and in that case, assign a point and play again
                     if (checkClosedSquare(coordinates[0]!!, coordinates[1]!!)) {
                         players[currentPlayer].score++
-                        println("Player ${players[currentPlayer].name} just scored!")
-                        println("Score:")
+                        outputManager.output("Player ${players[currentPlayer].name} just scored!")
+                        outputManager.output("Score:")
                         for (player in getScore()) {
-                            println(player.name + ":\t" + player.score)
+                            outputManager.output(player.name + ":\t" + player.score)
                         }
                         continue
                     }
-                } else
+                } else {
+                    outputManager.error(result.second)
                     continue
+                }
             }
 
             // Change player
@@ -155,12 +159,12 @@ class ScoreBoard(private val board: Board, somePlayers: List<Player>) {
         }
 
         // Game ended, print scoreboard and goodbye
-        println("Score:")
+        outputManager.output("Score:")
         for (player in getScore()) {
             // TODO: Pretty print
-            println("Player ${player.name}:	${player.score}")
+            outputManager.output("Player ${player.name}:	${player.score}")
         }
-        println("#################\n### Game Over ###\n#################")
+        outputManager.output("#################\n### Game Over ###\n#################")
 
     }
 }
